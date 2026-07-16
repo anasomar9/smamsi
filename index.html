@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>وحشتيني </title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.2/confetti.browser.min.js"></script>
+<style>
+:root{
+  --bg:#020617;
+  --card:rgba(255,255,255,.08);
+  --card-border:rgba(255,255,255,.14);
+  --primary:#FB7185;
+  --secondary:#F9A8D4;
+  --accent:#FBBF24;
+  --white:#FFFFFF;
+  --muted:rgba(255,255,255,.55);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html{scroll-behavior:smooth;}
+
+body{
+  background:var(--bg);
+  color:var(--white);
+  font-family:'Alexandria',sans-serif;
+  overflow-x:hidden;
+  position:relative;
+  min-height:100vh;
+}
+
+::selection{background:var(--primary);color:#fff;}
+
+/* ============ CANVAS LAYERS ============ */
+#sky-canvas, #hearts-canvas{
+  position:fixed;
+  top:0; left:0;
+  width:100vw; height:100vh;
+  z-index:0;
+  pointer-events:none;
+  transition:filter 2s ease;
+}
+#heart-particles-canvas{
+  position:absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  pointer-events:none;
+}
+
+.moon{
+  position:fixed;
+  top:6%;
+  left:8%;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fffdf5, #fef3c7 60%, #fde68a 100%);
+  box-shadow:0 0 40px 10px rgba(253,230,138,.35), 0 0 90px 30px rgba(253,230,138,.15);
+  z-index:1;
+  pointer-events:none;
+  transition:box-shadow 2s ease, filter 2s ease;
+}
+.moon.glow-bright{
+  box-shadow:0 0 60px 20px rgba(253,230,138,.55), 0 0 140px 50px rgba(253,230,138,.28);
+}
+
+/* ============ LAYOUT ============ */
+.stage{
+  position:relative;
+  z-index:2;
+}
+
+section{
+  min-height:100vh;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:8vh 6vw;
+  position:relative;
+  text-align:center;
+}
+
+/* ============ INTRO ============ */
+#intro{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:opacity 1.8s ease, visibility 1.8s ease;
+}
+#intro.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+
+.typing-line{
+  font-size:clamp(1.3rem, 4vw, 2.2rem);
+  font-weight:400;
+  color:var(--white);
+  letter-spacing:.3px;
+}
+.cursor{
+  display:inline-block;
+  width:2px;
+  height:1em;
+  background:var(--primary);
+  margin-inline-start:4px;
+  vertical-align:-.1em;
+  animation:blink 1s step-start infinite;
+}
+@keyframes blink{50%{opacity:0;}}
+
+/* ============ GLASS CARD ============ */
+.glass{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  backdrop-filter:blur(20px) saturate(140%);
+  -webkit-backdrop-filter:blur(20px) saturate(140%);
+  border-radius:24px;
+  box-shadow:0 8px 32px rgba(0,0,0,.35);
+}
+
+.card{
+  max-width:560px;
+  width:100%;
+  padding:32px 28px;
+  margin:14px 0;
+  font-size:clamp(1.05rem, 2.6vw, 1.3rem);
+  line-height:2;
+  font-weight:300;
+}
+
+/* ============ TITLES ============ */
+.big-title{
+  font-size:clamp(2.2rem, 9vw, 4.5rem);
+  font-weight:800;
+  background:linear-gradient(135deg, var(--primary), var(--secondary) 55%, var(--accent));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  margin-bottom:2.2rem;
+  filter:drop-shadow(0 0 25px rgba(251,113,133,.35));
+}
+
+.reveal-line{
+  font-size:clamp(1.1rem, 3.2vw, 1.6rem);
+  font-weight:300;
+  line-height:2;
+  max-width:600px;
+  min-height:1.6em;
+  color:var(--white);
+}
+
+.glow-final{
+  font-size:clamp(2rem, 8vw, 4rem);
+  font-weight:700;
+  color:var(--primary);
+  text-shadow:0 0 30px rgba(251,113,133,.7), 0 0 70px rgba(249,168,212,.4);
+}
+
+/* ============ BUTTON ============ */
+.cta-btn{
+  margin-top:3rem;
+  padding:16px 44px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.25);
+  background:linear-gradient(135deg, rgba(251,113,133,.25), rgba(249,168,212,.2));
+  backdrop-filter:blur(12px);
+  color:var(--white);
+  font-family:'Alexandria',sans-serif;
+  font-size:1.05rem;
+  font-weight:500;
+  cursor:pointer;
+  box-shadow:0 0 25px rgba(251,113,133,.25);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, background .35s ease;
+  letter-spacing:.3px;
+}
+.cta-btn:hover{
+  transform:translateY(-3px) scale(1.03);
+  box-shadow:0 0 40px rgba(251,113,133,.45);
+  background:linear-gradient(135deg, rgba(251,113,133,.4), rgba(249,168,212,.3));
+}
+.cta-btn:active{transform:translateY(0) scale(.98);}
+
+.choice-row{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-top:2.6rem;
+}
+.choice-btn{
+  padding:16px 36px;
+  border-radius:999px;
+  font-family:'Alexandria',sans-serif;
+  font-size:1rem;
+  font-weight:500;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,.25);
+  backdrop-filter:blur(12px);
+  color:var(--white);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease;
+}
+.choice-btn.yes{
+  background:linear-gradient(135deg, rgba(251,113,133,.35), rgba(249,168,212,.25));
+  box-shadow:0 0 25px rgba(251,113,133,.3);
+}
+.choice-btn.no{
+  background:rgba(255,255,255,.06);
+}
+.choice-btn:hover{transform:translateY(-3px) scale(1.03);}
+
+/* ============ TIMELINE ============ */
+.timeline{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+  margin-bottom:2.5rem;
+}
+.tl-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:14px 0;
+}
+.tl-emoji{font-size:2.1rem;}
+.tl-label{font-size:.95rem; font-weight:300; color:var(--muted);}
+.tl-arrow{
+  width:2px;
+  height:34px;
+  background:linear-gradient(var(--primary), transparent);
+  opacity:.5;
+}
+
+/* ============ HEART SCENE ============ */
+.heart-scene-wrap{
+  position:relative;
+  width:min(90vw, 480px);
+  height:min(90vw, 480px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:1rem;
+}
+
+/* ============ MUSIC PLAYER ============ */
+.player{
+  position:relative;
+  max-width:420px;
+  width:100%;
+  padding:22px 26px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+}
+.player-controls{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  width:100%;
+  justify-content:center;
+}
+.play-pause-btn{
+  width:52px; height:52px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.08);
+  color:var(--white);
+  font-size:1.2rem;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform .3s ease;
+}
+.play-pause-btn:hover{transform:scale(1.08);}
+.volume-slider{
+  -webkit-appearance:none;
+  width:120px;
+  height:4px;
+  border-radius:4px;
+  background:rgba(255,255,255,.2);
+  outline:none;
+}
+.volume-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--primary);
+  cursor:pointer;
+  box-shadow:0 0 8px rgba(251,113,133,.6);
+}
+
+/* ============ FADE / REVEAL UTILS ============ */
+.fx{
+  opacity:0;
+  filter:blur(8px);
+  transform:translateY(24px);
+  transition:opacity 1.3s cubic-bezier(.2,.7,.3,1), filter 1.3s cubic-bezier(.2,.7,.3,1), transform 1.3s cubic-bezier(.2,.7,.3,1);
+}
+.fx.show{
+  opacity:1;
+  filter:blur(0);
+  transform:translateY(0);
+}
+.fx.hide-out{
+  opacity:0;
+  filter:blur(8px);
+  transform:translateY(-16px);
+}
+
+.section-inner{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  max-width:640px;
+}
+
+.eyebrow{
+  font-size:.85rem;
+  letter-spacing:3px;
+  color:var(--secondary);
+  text-transform:uppercase;
+  margin-bottom:1rem;
+  opacity:.75;
+  font-weight:300;
+}
+
+/* Final blackout */
+#blackout{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:200;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 4s ease;
+}
+#blackout.active{opacity:1; pointer-events:all;}
+
+.final-msg{
+  position:fixed;
+  inset:0;
+  z-index:201;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:8vw;
+  font-size:clamp(1.3rem, 4.5vw, 2rem);
+  line-height:2;
+  font-weight:300;
+  color:var(--white);
+  opacity:0;
+  transition:opacity 2.5s ease;
+  pointer-events:none;
+}
+.final-msg.show{opacity:1;}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important; transition-duration:.2s !important;}
+}
+
+.scroll-hint{
+  position:absolute;
+  bottom:6vh;
+  font-size:.8rem;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  animation:bob 2.4s ease-in-out infinite;
+  opacity:.6;
+}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(8px);}}
+.scroll-hint span{font-size:1.1rem;}
+
+@keyframes breathe{
+  0%,100%{ filter:brightness(1); }
+  50%{ filter:brightness(1.08); }
+}
+body.breathing{
+  animation:breathe 6s ease-in-out infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- Background canvases -->
+<canvas id="sky-canvas"></canvas>
+<canvas id="hearts-canvas"></canvas>
+<div class="moon" id="moon"></div>
+
+<!-- Intro -->
+<div id="intro">
+  <div class="typing-line" id="typing-line"><span id="typing-text"></span><span class="cursor"></span></div>
+</div>
+
+<div id="blackout"></div>
+<div class="final-msg" id="final-msg"></div>
+
+<div class="stage" id="stage"></div>
+
+<script>
+/* ============================================================
+   CINEMATIC LOVE LETTER — vanilla JS build
+   Sections are injected + animated via IntersectionObserver
+   ============================================================ */
+
+/* ---------- STARFIELD + FLOATING HEARTS CANVAS ---------- */
+const skyCanvas = document.getElementById('sky-canvas');
+const skyCtx = skyCanvas.getContext('2d');
+const heartsCanvas = document.getElementById('hearts-canvas');
+const heartsCtx = heartsCanvas.getContext('2d');
+
+let W, H;
+function resize(){
+  W = window.innerWidth; H = window.innerHeight;
+  skyCanvas.width = W; skyCanvas.height = H;
+  heartsCanvas.width = W; heartsCanvas.height = H;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// Stars
+const STAR_COUNT = Math.min(220, Math.floor(W*H/6000));
+let stars = [];
+function initStars(){
+  stars = [];
+  for(let i=0;i<STAR_COUNT;i++){
+    stars.push({
+      x: Math.random()*W,
+      y: Math.random()*H,
+      r: Math.random()*1.4 + 0.3,
+      baseA: Math.random()*0.5+0.3,
+      speed: Math.random()*0.015+0.003,
+      phase: Math.random()*Math.PI*2
+    });
+  }
+}
+initStars();
+window.addEventListener('resize', initStars);
+
+let starBoost = 1; // multiplier for brightness (music-on state)
+let t = 0;
+function drawSky(){
+  skyCtx.clearRect(0,0,W,H);
+  t += 0.016;
+  for(const s of stars){
+    const a = (s.baseA + Math.sin(t*s.speed*40 + s.phase)*0.25) * starBoost;
+    skyCtx.beginPath();
+    skyCtx.fillStyle = `rgba(255,255,255,${Math.min(a,1)})`;
+    skyCtx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    skyCtx.fill();
+  }
+  requestAnimationFrame(drawSky);
+}
+drawSky();
+
+// Floating hearts (ambient, subtle) + soft particles
+let hearts = [];
+const HEART_COUNT = 14;
+function initHearts(){
+  hearts = [];
+  for(let i=0;i<HEART_COUNT;i++){
+    hearts.push({
+      x: Math.random()*W,
+      y: H + Math.random()*H,
+      size: Math.random()*10+8,
+      speed: Math.random()*0.3+0.15,
+      drift: Math.random()*0.6-0.3,
+      opacity: Math.random()*0.35+0.15,
+      hue: Math.random()>0.5 ? '#FB7185' : '#F9A8D4'
+    });
+  }
+}
+initHearts();
+window.addEventListener('resize', initHearts);
+
+let heartSpeedBoost = 1;
+function heartPath(ctx, x, y, size){
+  ctx.beginPath();
+  const topCurveHeight = size*0.3;
+  ctx.moveTo(x, y + topCurveHeight);
+  ctx.bezierCurveTo(x, y, x - size/2, y, x - size/2, y + topCurveHeight);
+  ctx.bezierCurveTo(x - size/2, y + (size+topCurveHeight)/2, x, y + (size+topCurveHeight)/2, x, y + size);
+  ctx.bezierCurveTo(x, y + (size+topCurveHeight)/2, x + size/2, y + (size+topCurveHeight)/2, x + size/2, y + topCurveHeight);
+  ctx.bezierCurveTo(x + size/2, y, x, y, x, y + topCurveHeight);
+  ctx.closePath();
+}
+
+function drawHearts(){
+  heartsCtx.clearRect(0,0,W,H);
+  for(const h of hearts){
+    h.y -= h.speed * heartSpeedBoost;
+    h.x += Math.sin(h.y*0.01)*h.drift*0.3;
+    if(h.y < -20){
+      h.y = H + 20;
+      h.x = Math.random()*W;
+    }
+    heartsCtx.save();
+    heartsCtx.globalAlpha = h.opacity;
+    heartsCtx.fillStyle = h.hue;
+    heartsCtx.shadowColor = h.hue;
+    heartsCtx.shadowBlur = 8;
+    heartPath(heartsCtx, h.x, h.y, h.size);
+    heartsCtx.fill();
+    heartsCtx.restore();
+  }
+  requestAnimationFrame(drawHearts);
+}
+drawHearts();
+
+/* ---------- INTRO TYPING ---------- */
+const typingText = document.getElementById('typing-text');
+const introEl = document.getElementById('intro');
+
+function typeText(str, speed=65){
+  return new Promise(resolve=>{
+    let i=0;
+    const iv = setInterval(()=>{
+      typingText.textContent = str.slice(0,i+1);
+      i++;
+      if(i>=str.length){ clearInterval(iv); resolve(); }
+    }, speed);
+  });
+}
+function deleteText(speed=35){
+  return new Promise(resolve=>{
+    const iv = setInterval(()=>{
+      const cur = typingText.textContent;
+      if(cur.length===0){ clearInterval(iv); resolve(); return; }
+      typingText.textContent = cur.slice(0,-1);
+    }, speed);
+  });
+}
+function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+async function runIntro(){
+  await wait(900);
+  await typeText('في رسالة صغيرة ليكي...');
+  await wait(1600);
+  await deleteText();
+  await wait(400);
+  await typeText('بس أوعديني تكمليها للآخر ❤️');
+  await wait(2200);
+  introEl.classList.add('hidden');
+  document.body.style.overflow = 'auto';
+}
+
+document.body.style.overflow = 'hidden';
+runIntro();
+
+/* ---------- SCROLL REVEAL ENGINE ---------- */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.classList.add('show');
+    }
+  });
+}, { threshold: 0.35 });
+
+function observeAll(root=document){
+  root.querySelectorAll('.fx').forEach(el=>io.observe(el));
+}
+
+/* ---------- SEQUENCED LINE REVEALS (per-section) ---------- */
+function makeSequencer(container, lines, opts={}){
+  // Creates stacked .fx divs, reveals them one at a time when container enters view
+  const gap = opts.gap ?? 1400;
+  const holder = document.createElement('div');
+  holder.className = 'reveal-line';
+  container.appendChild(holder);
+  let started = false;
+
+  const seqObserver = new IntersectionObserver(async (entries)=>{
+    for(const entry of entries){
+      if(entry.isIntersecting && !started){
+        started = true;
+        for(const line of lines){
+          holder.classList.remove('show');
+          holder.classList.add('fx');
+          await wait(80);
+          holder.textContent = line;
+          holder.classList.add('show');
+          await wait(gap);
+        }
+        if(opts.onDone) opts.onDone(holder);
+      }
+    }
+  }, { threshold: 0.5 });
+  seqObserver.observe(container);
+  return holder;
+}
+
+const stage = document.getElementById('stage');
+</script>
+
+<!-- Section scripts continue in next file part -->
+<script src="sections.js"></script>
+</body>
+</html>
