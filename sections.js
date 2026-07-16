@@ -335,7 +335,7 @@ async function runFinalSequence(){
 function showMusicPlayer(){
   const playerWrap = el('div', 'player glass fx');
   playerWrap.innerHTML = `
-    <audio id="bgMusic" src="music.mp3"></audio>
+    <audio id="bgMusic" src="music.mp3.m4a"></audio>
     <button class="cta-btn" id="playMusicBtn">🎵 تشغيل الأغنية</button>
     <div class="player-controls" id="playerControls" style="display:none;">
       <button class="play-pause-btn" id="pauseBtn">⏸</button>
